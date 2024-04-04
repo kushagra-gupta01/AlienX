@@ -1,0 +1,13 @@
+package profile
+
+type User struct {
+	FirstName string
+	LastName  string
+	Email 		string
+}
+
+templ Index(user User){
+  <h1>User profile Page {user.Email}</h1>
+  <h2>{user.FirstName}</h2>
+  <h2>{user.LastName}</h2>
+}
