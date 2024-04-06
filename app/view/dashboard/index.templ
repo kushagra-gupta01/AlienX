@@ -1,5 +1,22 @@
 package dashboard
 
+func userEmail(ctx context.Context) string{
+  email,ok:= ctx.Value("email").(string)
+  if !ok{
+    return ""
+  }
+  return email
+}
+templ foo(email string){
+  <h1>{email}</h1>
+}
+
 templ Index(){
-  <h1>Dashboard</h1>
+  if len(userEmail(ctx))>0{
+  <h1>Dashboard Paeee</h1>
+  @foo(userEmail(ctx))
+  }
+  else {
+  <h1>donee</h1>
+}
 }
