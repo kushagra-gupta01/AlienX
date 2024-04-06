@@ -1,12 +1,11 @@
-package alienx
+package AlienX
 
 import (
 	"context"
-	"log/slog"
-	"net/http"
-
 	"github.com/a-h/templ"
 	"github.com/julienschmidt/httprouter"
+	"log/slog"
+	"net/http"
 )
 
 type ErrorHandler func(error, *Context) error
@@ -21,11 +20,22 @@ func (c *Context) Render(component templ.Component) error {
 	return component.Render(c.ctx, c.response)
 }
 
+func (c *Context) Set(key string, val any) {
+	c.ctx = context.WithValue(c.ctx, key, val)
+}
+
+func (c *Context) Get(key string) any {
+	return c.ctx.Value(key)
+}
+
+type Plug func(Handler) Handler
+
 type Handler func(c *Context) error
 
 type AlienX struct {
 	ErrorHandler ErrorHandler
 	router       *httprouter.Router
+	middlewares  []Plug
 }
 
 func New() *AlienX {
@@ -33,6 +43,10 @@ func New() *AlienX {
 		router:       httprouter.New(),
 		ErrorHandler: defaultErrorHandler,
 	}
+}
+
+func (x *AlienX) Plug(plugs ...Plug) {
+	x.middlewares = append(x.middlewares, plugs...)
 }
 
 func (x *AlienX) Start(port string) error {
@@ -49,6 +63,9 @@ func (x *AlienX) makeHTTPRouterHandle(h Handler) httprouter.Handle {
 			response: w,
 			request:  r,
 			ctx:      context.Background(),
+		}
+		for i := len(x.middlewares) - 1; i >= 0; i-- {
+			h=x.middlewares[i](h)
 		}
 		if err := h(ctx); err != nil {
 			//todo: handle the error from the error handler
