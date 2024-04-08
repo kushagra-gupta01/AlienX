@@ -11,7 +11,8 @@ import (
 func main() {
 	app := AlienX.New()
 	app.Plug(WithRequestId, WithAuth)
-	app.Get("/profile", HandleProfileIndex)
+	ph := NewProfileHandler(&NOOPSB{})
+	app.Get("/profile", ph.HandleProfileIndex)
 	app.Get("/dashboard", HandleDashboardIndex)
 	app.Start(":3000")
 }
@@ -32,7 +33,27 @@ fmt.Println("request")
 	}
 }
 
-func HandleProfileIndex(c *AlienX.Context) error {
+type SupabaseClient interface{
+	Auth(foo string) error
+	//...some methods
+}
+
+type NOOPSB struct{}
+
+func (NOOPSB) Auth(foo string) error{return nil}
+
+type ProfileHandler struct{
+	sbClient SupabaseClient
+	//...
+}
+
+func NewProfileHandler(sb SupabaseClient) *ProfileHandler{
+	return &ProfileHandler{
+		sbClient: sb,
+	}
+}
+
+func (h *ProfileHandler) HandleProfileIndex(c *AlienX.Context) error {
 	user := profile.User{
 		FirstName: "kk",
 		LastName:  "g",
